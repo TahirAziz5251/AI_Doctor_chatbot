@@ -1,0 +1,18 @@
+# Core dependencies
+python-dotenv==1.0.1
+groq==0.9.0
+httpx==0.27.0
+pillow==10.3.0
+
+# Optional for data science / ML experiments
+numpy>=1.26.0
+pandas>=2.2.0
+
+# Optional for web app / API
+flask>=3.0.0
+fastapi>=0.110.0
+uvicorn>=0.27.0
+
+# If you plan to use vector databases or embeddings later
+faiss-cpu>=1.7.4
+langchain>=0.1.10
