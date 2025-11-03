@@ -22,7 +22,7 @@ def play_audio(file_path):
                 sound = AudioSegment.from_mp3(file_path)
                 sound.export(wav_file, format="wav")
                 file_path = wav_file
-            subprocess.run(["powershell", "-c", f"(New-Object Media.SoundPlayer '{file_path}').PlaySync();"])
+            subprocess.run(["powershell", "-c ", f"(New-Object Media.SoundPlayer '{file_path}').PlaySync();"])
         elif os_name == "Linux":  # Linux
             subprocess.run(["aplay", file_path])
         else:
@@ -43,7 +43,7 @@ def text_to_speech_with_gtts(input_text, output_file):
 def text_to_speech_with_elevenlabs(input_text, output_file):
     client = ElevenLabs(api_key=key)
     audio = client.text_to_speech.convert(
-        voice_id="gs0tAILXbY5DNrJrsM6F",  # Example voice ID
+        voice_id="gs0tAILXbY5DNrJrsM6F",  
         model_id="eleven_turbo_v2",
         output_format="mp3_22050_32",
         text=input_text

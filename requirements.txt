@@ -16,3 +16,6 @@ uvicorn>=0.27.0
 # If you plan to use vector databases or embeddings later
 faiss-cpu>=1.7.4
 langchain>=0.1.10
+gradio==4.44.1
+fastapi
+uvicorn

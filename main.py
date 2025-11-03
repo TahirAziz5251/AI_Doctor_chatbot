@@ -9,14 +9,11 @@ key = os.getenv("GROQ_API_KEY")
 
 
 
-#  Compress + Encode Image 
-# image_path = "applying-moisturizer-skin-with-psoriasis.jpg"
-
 def encode_image(image_path):
     
     img = Image.open(image_path)
 
-    # resize to max 512x512 to reduce size
+    # resize to max 
     img.thumbnail((512, 512))
 
     buffer = io.BytesIO()
@@ -47,7 +44,7 @@ def analyze_image_with_query(query, model, encoded_image):
     chat_completion = client.chat.completions.create(
         model=model,
         messages=messages,
-        max_tokens=512,   # reduce tokens for safety
+        max_tokens=512,   # reduce tokens 
         temperature=0.7,
     )
 

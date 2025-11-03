@@ -3,7 +3,8 @@ import gradio as gr
 
 from main import encode_image, analyze_image_with_query
 from patient_voice import transcribe_with_groq, record_audio
-from doctor_voice import play_audio, text_to_speech_with_gtts, text_to_speech_with_elevenlabs
+from doctor_voice import text_to_speech_with_elevenlabs
+
 
 system_prompt = """ You have to act a professional doctor. You will help patients by analyzing their medical images and answering their questions based on the images and their voice input. Provide clear, concise, and empathetic responses.
 If you make a differential, suggest some remedies for them. Don't add any number and special characters in your response. Don't say
@@ -12,7 +13,7 @@ Don't response as an AI model in markdown, your answer should be mimic that of a
 answer concise (max 2 sentence). No preamle, start your answer right way please."""
 
 def process_input(audio_file_path, image_path):
-    # Speech to Text
+    # --- Patient Voice to Text ---
     if audio_file_path:
         audio_file_path = "patient_voice.mp3"
         record_audio(file_path=audio_file_path, timeout=15, phrase_time_limit=None)
@@ -28,46 +29,70 @@ def process_input(audio_file_path, image_path):
     else:
         speech_to_text_output = "No audio provided."
 
-
-    # --- Image Analysis with Query ---
+    # --- Image + Query Analysis ---
     if image_path:
         doctor_response = analyze_image_with_query(
-            query=system_prompt+ speech_to_text_output,
+            query=system_prompt + speech_to_text_output,
             encoded_image=encode_image(image_path),
             model="meta-llama/llama-4-scout-17b-16e-instruct"
         )
     else:
         doctor_response = "No image provided for analysis."
 
-    # --- Text to Speech ---
+    # --- Doctor Voice (TTS) ---
     output_audio_file = "final.mp3"
     text_to_speech_with_elevenlabs(
-        input_text = doctor_response,
+        input_text=doctor_response,
         output_file=output_audio_file
     )
-    play_audio("final.mp3")
-    try: 
-        play_audio(output_audio_file)
-    except Exception as e:
-        print(f"Could not play audio: {e}")
 
     return speech_to_text_output, doctor_response, output_audio_file
 
 
+def toggle_audio(is_playing, audio_path):
+    """Custom Play/Stop toggle button"""
+    if is_playing:
+        # Stop audio
+        return None, False, "▶️ Play Doctor Response"
+    else:
+        # Start audio
+        return audio_path, True, "⏹️ Stop Doctor Response"
+
+
 # --- Gradio Interface ---
-iface = gr.Interface(
-    fn=process_input,
-    inputs=[
-        gr.Audio(sources="microphone", type="filepath", label="Patient Voice Input"),
-        gr.Image(type="filepath", label="Upload Medical Image")
-    ],
-    outputs=[
-        gr.Textbox(label="Speech to Text"),
-        gr.Textbox(label="Doctor's Response"),
-        gr.Audio(label="Doctor's Voice", type="filepath")
-    ],
-    title="AI Doctor Chatbot with Vision and Voice",
-)
+with gr.Blocks(title="AI Doctor") as iface:
+    with gr.Row():
+        patient_audio = gr.Audio(sources="microphone", type="filepath", label="Patient Voice Input")
+        medical_image = gr.Image(type="filepath", label="Upload Medical Image")
+
+    stt_text = gr.Textbox(label="Speech to Text", lines=3, interactive=False)
+    doctor_text = gr.Textbox(label="Doctor's Response", lines=8, interactive=False)
+
+    # Hidden Audio player (not autoplay)
+    doctor_audio = gr.Audio(label="Doctor's Voice", type="filepath", interactive=False)
+
+    # State to track play/stop
+    is_playing = gr.State(False)
+
+    # Custom Play/Stop Button
+    play_button = gr.Button("▶️ Play Doctor Response")
+
+    # Run analysis
+    run_btn = gr.Button("Analyze & Generate Response")
+
+    # Outputs from main function
+    run_btn.click(
+        fn=process_input,
+        inputs=[patient_audio, medical_image],
+        outputs=[stt_text, doctor_text, doctor_audio]
+    )
+
+    # Toggle button
+    play_button.click(
+        fn=toggle_audio,
+        inputs=[is_playing, doctor_audio],
+        outputs=[doctor_audio, is_playing, play_button]
+    )
 
 if __name__ == "__main__":
-    iface.launch(debug=True)
+    iface.launch(show_api=False, share=True, debug=True)
